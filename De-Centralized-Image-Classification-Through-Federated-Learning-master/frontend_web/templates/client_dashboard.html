@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block title %}Edge Discovery Node - Decentralized Multimodal Intelligence{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold">
+            <i class="fas fa-shield-halved text-primary"></i> Privacy-Preserving Edge Discovery Node
+        </h2>
+    </div>
+</div>
+
+<div class="row g-4">
+        <!-- Configuration Panel -->
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-sliders me-2"></i>Edge Node Configuration
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label for="clientId" class="text-tertiary small text-uppercase fw-bold mb-2 d-block">Discovery Batch</label>
+                    <select class="form-control" id="clientId">
+                        {% for i in range(10) %}
+                        <option value="{{ i }}">Batch {{ i }} (500 images)</option>
+                        {% endfor %}
+                    </select>
+                    <div class="mt-2 small text-secondary">
+                        <i class="fas fa-info-circle me-1"></i> Local processing - zero data transmission
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-lg" id="startTraining" onclick="startTraining()">
+                        <i class="fas fa-play"></i> Begin Discovery
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" id="stopTraining" onclick="stopTraining()" disabled>
+                        <i class="fas fa-stop"></i> Halt Processing
+                    </button>
+                </div>
+
+                <div class="mt-4 p-3 bg-dark-2 rounded-3 border border-color">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-lock text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-white small fw-bold">Privacy Architecture Active</div>
+                            <div class="text-tertiary smaller">Images + LoRA adapters synced only.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <label for="clientId" class="text-tertiary small text-uppercase fw-bold mb-2 d-block">Dataset Partition</label>
+                    <select class="form-control" id="clientId">
+                        {% for i in range(10) %}
+                        <option value="{{ i }}">Node Partition {{ i }} (5,000 images)</option>
+                        {% endfor %}
+                    </select>
+                    <div class="mt-2 small text-secondary">
+                        <i class="fas fa-info-circle me-1"></i> Selection isolated to local filesystem
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-primary btn-lg" id="startTraining" onclick="startTraining()">
+                        <i class="fas fa-play"></i> Initialize Node
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" id="stopTraining" onclick="stopTraining()" disabled>
+                        <i class="fas fa-stop"></i> Terminate Process
+                    </button>
+                </div>
+
+                <div class="mt-4 p-3 bg-dark-2 rounded-3 border border-color">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-shield-halved text-success fs-4"></i>
+                        </div>
+                        <div>
+                            <div class="text-white small fw-bold">Privacy Guard Active</div>
+                            <div class="text-tertiary smaller">Local data never leaves this node.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- Metrics & Progress -->
+        <div class="col-lg-8">
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center py-4">
+                            <div class="text-tertiary small text-uppercase mb-2">Processing State</div>
+                            <div class="h4 mb-0 fw-bold" id="clientStatus">
+                                <span class="text-secondary">Idle</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center py-4">
+                            <div class="text-tertiary small text-uppercase mb-2">Insights Generated</div>
+                            <div class="h4 mb-0 fw-bold text-success" id="localAcc">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body text-center py-4">
+                            <div class="text-tertiary small text-uppercase mb-2">Images Processed</div>
+                            <div class="h4 mb-0 fw-bold text-info" id="samplesCount">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <!-- Progress & Log -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-microscope me-2"></i>Discovery Processing Progress</span>
+                <span id="progressPercent" class="badge bg-primary-transparent text-primary">0%</span>
+            </div>
+            <div class="card-body">
+                <div class="progress bg-dark-4 mb-4" style="height: 8px;">
+                    <div class="progress-bar bg-primary" id="progressBar" role="progressbar" style="width: 0%"></div>
+                </div>
+
+                <div class="bg-black rounded-3 p-0 overflow-hidden border border-color">
+                    <div class="card-header bg-dark-3 py-2 border-bottom border-color">
+                        <span class="smaller text-tertiary"><i class="fas fa-terminal me-2"></i>Edge Processing Log</span>
+                    </div>
+                    <div id="clientLog" class="p-3" style="font-family: 'JetBrains Mono', monospace; height: 300px; overflow-y: auto; font-size: 0.8rem;">
+                        <div class="text-tertiary">Waiting for discovery initialization...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let isTraining = false;
+    const logElement = document.getElementById('clientLog');
+    
+    function addLog(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = 'mb-1 py-1 border-start ps-2 ' + (type === 'success' ? 'border-success' : 'border-primary');
+        logEntry.innerHTML = `<span class="text-tertiary smaller me-2">${timestamp}</span> <span class="text-secondary">${message}</span>`;
+        
+        if (logElement.innerText.includes('Waiting for initialization...')) {
+            logElement.innerHTML = '';
+        }
+        
+        logElement.appendChild(logEntry);
+        logElement.scrollTop = logElement.scrollHeight;
+    }
+    
+    function startTraining() {
+        if (isTraining) return;
+        
+        const clientId = document.getElementById('clientId').value;
+        isTraining = true;
+        
+        document.getElementById('startTraining').disabled = true;
+        document.getElementById('stopTraining').disabled = false;
+        document.getElementById('clientId').disabled = true;
+        document.getElementById('clientStatus').innerHTML = '<span class="text-warning"><i class="fas fa-circle-notch fa-spin me-2"></i>Processing</span>';
+        
+        logElement.innerHTML = '';
+        addLog(`Starting edge discovery node ${clientId}...`);
+        addLog(`Loading BLIP-VQA model into local memory...`);
+        
+        simulateTraining(clientId);
+    }
+    
+    function stopTraining() {
+        isTraining = false;
+        document.getElementById('startTraining').disabled = false;
+        document.getElementById('stopTraining').disabled = true;
+        document.getElementById('clientId').disabled = false;
+        document.getElementById('clientStatus').innerHTML = '<span class="text-danger">Stopped</span>';
+        document.getElementById('progressBar').style.width = '0%';
+        document.getElementById('progressPercent').textContent = '0%';
+        
+        addLog('Discovery processing halted by user.', 'error');
+    }
+    
+    function simulateTraining(clientId) {
+        let batch = 1;
+        let quality = 65;
+        let insight_count = 0;
+        let processed = 0;
+        
+        const interval = setInterval(() => {
+            if (!isTraining) {
+                clearInterval(interval);
+                return;
+            }
+            
+            processed += 50;
+            quality = Math.min(95, quality + Math.random() * 2);
+            insight_count += 5;
+            
+            const progress = Math.min((processed / 500) * 100, 100);
+            
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+            document.getElementById('localAcc').textContent = insight_count;
+            document.getElementById('samplesCount').textContent = Math.min(processed, 500).toLocaleString();
+            
+            if (processed % 100 === 0) {
+                addLog(`Batch ${batch}: Processed ${processed}/500 images, quality score ${quality.toFixed(1)}%`, 'info');
+            }
+            
+            if (processed >= 500) {
+                addLog(`Batch ${batch} complete. Syncing LoRA adapters to aggregator...`, 'success');
+                batch++;
+                processed = 0;
+            }
+            
+            if (batch > 3) {
+                isTraining = false;
+                clearInterval(interval);
+                document.getElementById('clientStatus').innerHTML = '<span class="text-success"><i class="fas fa-check-circle me-2"></i>Synced</span>';
+                document.getElementById('startTraining').disabled = false;
+                document.getElementById('stopTraining').disabled = true;
+                document.getElementById('clientId').disabled = false;
+                addLog('Discovery analysis complete. LoRA adapters synchronized with federated network.', 'success');
+            }
+        }, 800);
+    }
+</script>
+
+<style>
+    /* Specific overrides for this dashboard */
+    .bg-primary-transparent {
+        background: rgba(99, 102, 241, 0.1);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+    .smaller { font-size: 0.75rem; }
+    .bg-dark-4 { background: var(--dark-4); }
+    .bg-dark-2 { background: var(--dark-2); }
+</style>
+{% endblock %}
